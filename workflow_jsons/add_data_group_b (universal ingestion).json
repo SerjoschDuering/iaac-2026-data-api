@@ -1,0 +1,2309 @@
+{
+  "name": "add_data_group_b (universal ingestion)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        64
+      ],
+      "id": "05e9be47-5af9-4d4c-bf11-4e8900b878d7",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        272
+      ],
+      "id": "7da77182-f8e2-4960-abc4-4c51b960f7ac",
+      "name": "Wait",
+      "webhookId": "cbaa57d7-9188-47c6-8c08-d8b7fedc0d85"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "q": "subject:ISOCARP-WS"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        784
+      ],
+      "id": "335a0dc6-2e02-4ffd-abac-9ab2126e867c",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "oaMbbgHj9xMUB1D0",
+          "name": "Gmail account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        784
+      ],
+      "id": "6593306a-c3c7-40d7-81c2-f138051cf294",
+      "name": "Get a message",
+      "webhookId": "bc478f54-b0e2-467a-87aa-350d51abdc12",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "oaMbbgHj9xMUB1D0",
+          "name": "Gmail account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94671f68-91a8-42a5-a841-4380dfcf3823",
+              "name": "From",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "15e9f286-df44-4ef3-a188-05564840756a",
+              "name": "Subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "e414dbbe-c4db-461e-b5c3-eb28bf48bd7e",
+              "name": "To",
+              "value": "={{ $json.To }}",
+              "type": "string"
+            },
+            {
+              "id": "3ccc363b-5cb3-4af1-b35d-8bf5521db211",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        784
+      ],
+      "id": "8a49ce3c-fe9b-48f0-a555-87dfffee1847",
+      "name": "Edit Fields2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "You are a specialized AI assistant for the Barcelona Public Space Design\n  knowledge base (Qdrant vector store).\n\n  Project Context\n\n  1. Barcelona Model: A city renowned for its human-scale urban design,\n  superblocks (superilles), and Mediterranean public life. Focus:\n  Walkability, green infrastructure, tactical urbanism, and climate\n  adaptation.\n  2. Design Reference Database: Research, guidelines, and case studies on\n  public space design, placemaking, and sustainable urbanism for\n  practitioners working in Mediterranean climates.\n\n  Your Task\n\n  1. Understand queries from urban planners, landscape architects, and\n  design practitioners.\n  2. Design intelligent multi-turn search strategies to find design\n  guidelines, case studies, and technical specifications.\n  3. Retrieve information using semantic search and strict metadata \n  filtering via the search tool.\n  4. Synthesize findings into structured, well-sourced answers.\n\n  We have text descriptions of images/charts. If the user uploads an image,\n  describe it and use that description as a search query.\n\n  ---\n\n   Metadata Schema\n\n  Each document chunk has these fields (use for filtering):\n\n  summary (string)\n  AI-generated 2-3 sentence summary\n\n  source_type (enum)\n  pdf_page, policy_document, planning_document, design_guideline,\n  technical_standard, research_paper, case_study, species_database,\n  project_report, email, presentation\n\n  category (enum)\n  climate_microclimate, vegetation_greening, pedestrian_mobility,\n  public_space, transit_infrastructure, building_architecture,\n  water_irrigation, materials_surfaces, policy_regulation, simulation_tools,\n   project_management, general\n\n  tags (array)\n  Specific keywords (e.g., superblock, Cerdà, SUDS, plaça, Eixample)\n\n  themes (array)\n  Broader themes (e.g., walkability, tactical_urbanism, green_corridors,\n  heat_mitigation)\n\n  design_elements (enum)\n  trees, shrubs, groundcover, shade_structures, pergolas, paving,\n  water_features, street_furniture, lighting, signage, buildings, pathways,\n  none\n\n  publication_date (date)\n  YYYY-MM-DD format\n\npayload \nstrucutred data e.g. JSONS if applicable \n\nlong\nlongitute as number\n\nlat\nlattitude as number \n\n  ---\n  Search Strategy\n\n  Recommended: Multi-turn retrieval\n\n  Pattern 1: Scouting → Detail Fetching\n  - Scouting: High limit (20-40), loose filters (e.g., just category: \n  public_space). Request relevant_keys=\"summary,url,source_type\" to scan\n  quickly.\n  - Detail: Low limit (5-10), full content. Strict filters based on scouting\n   findings.\n\n  Alternative Patterns\n  - Technical/Scientific: source_type: research_paper + relevant tags\n  - Policy/Compliance: source_type: policy_document OR design_guideline\n  - Design Implementation: category: pedestrian_mobility + design_elements: \n  paving\n  - Green Infrastructure: category: vegetation_greening + themes: \n  green_corridors\n\n \n  Response Format\n\n  Structure:\n  - Concise summary heading\n  - Key findings with source citations\n  - Relevant sections (Guidelines, Case Studies, Technical Specs)\n\n  Rules:\n  1. Always cite with clickable Markdown links: [Doc Name p.X](URL)\n  2. Include botanical names for plants when available\n  3. Max 2 citations per source, then say \"see above\"\n  4. First answer: 50-150 words, offer follow-ups (unless user asked for\n  depth)\n\n  Language: English (Professional) unless Catalan/Spanish requested. Use\n  correct terminology (superblock, SUDS, tactical urbanism).\n\n  Constraint: Only cite retrieved sources. If sparse results, suggest\n  broadening the search.\n",
+        "height": 2704,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2032,
+        240
+      ],
+      "typeVersion": 1,
+      "id": "8298c8c5-8e6e-4ffb-be05-08ac248abbb6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Adding PDFs",
+        "height": 80,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "dc415363-3afb-4294-96c6-51fd18a7627c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Adding Emails",
+        "height": 80,
+        "width": 768
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -432,
+        624
+      ],
+      "typeVersion": 1,
+      "id": "69433bff-382a-4c45-8cc7-5e66426ce0e7",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Query Project Data with Chatbot",
+        "height": 80,
+        "width": 2496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        1296
+      ],
+      "typeVersion": 1,
+      "id": "989b206e-9a3f-4b7f-b2f5-0fc1fff30d84",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## MCP Connection",
+        "height": 80,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        5664
+      ],
+      "typeVersion": 1,
+      "id": "3b7fd2e9-935b-4475-acf6-e6797830bd90",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Requires pdf-lib (already installed and allowed in your image)\nconst { PDFDocument } = require('pdf-lib');\n\nconst inputItems = await $input.all();\nconst outputs = [];\n\nfor (const item of inputItems) {\n  if (!item.binary || Object.keys(item.binary).length === 0) {\n    throw new Error('No binary data found. Pass a PDF as binary into this node.');\n  }\n\n  const binKey = Object.keys(item.binary)[0];\n  const bin = item.binary[binKey];\n\n  const mime = bin.mimeType || 'application/pdf';\n  if (mime !== 'application/pdf') {\n    throw new Error('Input binary is not a PDF (mimeType=' + mime + ').');\n  }\n\n  const originalName = bin.fileName || 'document.pdf';\n  const base = originalName.replace(/\\.pdf$/i, '');\n\n  const srcBytes = Buffer.from(bin.data, 'base64');\n  const srcPdf = await PDFDocument.load(srcBytes);\n  const pageCount = srcPdf.getPageCount();\n\n  for (let i = 0; i < pageCount; i++) {\n    const newPdf = await PDFDocument.create();\n    const [page] = await newPdf.copyPages(srcPdf, [i]);\n    newPdf.addPage(page);\n\n    const outBytes = await newPdf.save();\n    const outB64 = Buffer.from(outBytes).toString('base64');\n    const pageNum = i + 1;\n    const pageName = `${base}_p${String(pageNum).padStart(3, '0')}.pdf`;\n\n    outputs.push({\n      json: {\n        pageNumber: pageNum,\n        totalPages: pageCount,\n        originalFileName: originalName,\n        pageFileName: pageName,\n      },\n      binary: {\n        data: {\n          data: outB64,\n          mimeType: 'application/pdf',\n          fileName: pageName,\n          fileExtension: 'pdf',\n        },\n      },\n    });\n  }\n}\n\nreturn outputs;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        64
+      ],
+      "id": "e1adbf73-3277-4bb3-8f04-1f377d01148e",
+      "name": "Code in JavaScript1",
+      "notesInFlow": true,
+      "notes": "PDF in Seiten Teilen"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "run8n-public",
+        "fileName": "=pdf-pages/{{ $json.pageFileName }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        0,
+        64
+      ],
+      "id": "17abb2ab-0f9d-48bc-9485-c1cbca3c0f1c",
+      "name": "Upload a file2",
+      "credentials": {
+        "s3": {
+          "id": "4kOd3WOFIZhjnSlL",
+          "name": "backblaze-public-S3 account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48c3b6f4-a3f1-40e3-b80b-a5e80f91f2fa",
+              "name": "=page_file_url",
+              "value": "=https://s3.eu-central-003.backblazeb2.com/run8n-public/pdf-pages/{{ $('Code in JavaScript1').item.json.pageFileName }}",
+              "type": "string"
+            },
+            {
+              "id": "24c3df8f-a581-402a-86ae-d69944938bf6",
+              "name": "page_num",
+              "value": "={{ $('Code in JavaScript1').item.json.pageNumber }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        64
+      ],
+      "id": "23549f06-e1ce-4f6c-9888-98f1966d4e05",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a specialized AI assistant for the Barcelona Public Space Design\n  knowledge base (Qdrant vector store).\n\n  Project Context\n\n  1. Barcelona Model: A city renowned for its human-scale urban design,\n  superblocks (superilles), and Mediterranean public life. Focus:\n  Walkability, green infrastructure, tactical urbanism, and climate\n  adaptation.\n  2. Design Reference Database: Research, guidelines, and case studies on\n  public space design, placemaking, and sustainable urbanism for\n  practitioners working in Mediterranean climates.\n\n  Your Task\n\n  1. Understand queries from urban planners, landscape architects, and\n  design practitioners.\n  2. Design intelligent multi-turn search strategies to find design\n  guidelines, case studies, and technical specifications.\n  3. Retrieve information using semantic search and strict metadata \n  filtering via the search tool.\n  4. Synthesize findings into structured, well-sourced answers.\n\n  We have text descriptions of images/charts. If the user uploads an image,\n  describe it and use that description as a search query.\n\n  ---\n\n   Metadata Schema\n\n  Each document chunk has these fields (use for filtering):\n\n  summary (string)\n  AI-generated 2-3 sentence summary\n\n  source_type (enum)\n  pdf_page, policy_document, planning_document, design_guideline,\n  technical_standard, research_paper, case_study, species_database,\n  project_report, email, presentation\n\n  category (enum)\n  climate_microclimate, vegetation_greening, pedestrian_mobility,\n  public_space, transit_infrastructure, building_architecture,\n  water_irrigation, materials_surfaces, policy_regulation, simulation_tools,\n   project_management, general\n\n  tags (array)\n  Specific keywords (e.g., superblock, Cerdà, SUDS, plaça, Eixample)\n\n  themes (array)\n  Broader themes (e.g., walkability, tactical_urbanism, green_corridors,\n  heat_mitigation)\n\n  design_elements (enum)\n  trees, shrubs, groundcover, shade_structures, pergolas, paving,\n  water_features, street_furniture, lighting, signage, buildings, pathways,\n  none\n\n  publication_date (date)\n  YYYY-MM-DD format\n\n  ---\n  Search Strategy\n\n  Recommended: Multi-turn retrieval\n\n  Pattern 1: Scouting → Detail Fetching\n  - Scouting: High limit (20-40), loose filters (e.g., just category: \n  public_space). Request relevant_keys=\"summary,url,source_type\" to scan\n  quickly.\n  - Detail: Low limit (5-10), full content. Strict filters based on scouting\n   findings.\n\n  Alternative Patterns\n  - Technical/Scientific: source_type: research_paper + relevant tags\n  - Policy/Compliance: source_type: policy_document OR design_guideline\n  - Design Implementation: category: pedestrian_mobility + design_elements: \n  paving\n  - Green Infrastructure: category: vegetation_greening + themes: \n  green_corridors\n\n \n  Response Format\n\n  Structure:\n  - Concise summary heading\n  - Key findings with source citations\n  - Relevant sections (Guidelines, Case Studies, Technical Specs)\n\n  Rules:\n  1. Always cite with clickable Markdown links: [Doc Name p.X](URL)\n  2. Include botanical names for plants when available\n  3. Max 2 citations per source, then say \"see above\"\n  4. First answer: 50-150 words, offer follow-ups (unless user asked for\n  depth)\n\n  Language: English (Professional) unless Catalan/Spanish requested. Use\n  correct terminology (superblock, SUDS, tactical urbanism).\n\n  Constraint: Only cite retrieved sources. If sparse results, suggest\n  broadening the search.\n",
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        1504
+      ],
+      "id": "8594d826-76c2-4cc6-9c81-e51f042c8713",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionTTL": 900,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -16,
+        1760
+      ],
+      "id": "a675e8bb-b510-4af0-aed5-26eccf302655",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "wdQB9kfj3vi9eZDT",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Searches the Qdrant vector database for Riyadh/Climate Corridor documents.\n\n### CRITICAL: search_filter Syntax\nYou must return a VALID JSON object.\n\n1. NO FILTER (Semantic Search only):\n   {}\n\n2. SINGLE Condition:\n   { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } }\n\n3. MULTIPLE Conditions (AND logic) - Use 'must':\n   {\n     \"must\": [\n       { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } },\n       { \"key\": \"metadata.geographic_scope\", \"match\": { \"value\": \"city_riyadh\" } }\n     ]\n   }\n\n4. OR Logic - Use 'should':\n   {\n     \"should\": [\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"policy_document\" } },\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"design_guideline\" } }\n     ]\n   }\n\n### Available Metadata Keys:\nmetadata.category, metadata.source_type, metadata.planning_phase, metadata.tags, metadata.geographic_scope, metadata.has_quantitative_data, metadata.design_elements, \n\n### Enum Values:\n- categories: climate_microclimate, vegetation_greening, pedestrian_mobility, public_space, transit_infrastructure, water_irrigation, materials_surfaces\n- source_type: policy_document, design_guideline, research_paper, case_study, species_database\n\nUse 'relevant_keys' to limit output (e.g. \"summary,url,tags\").",
+        "workflowId": {
+          "__rl": true,
+          "value": "OLatSHlinuSYUVR2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OLatSHlinuSYUVR2",
+          "cachedResultName": "sub-data-fetching-iaac"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('limit', ``, 'number') }}",
+            "search_filter": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('search_filter', `Use empty filter {} for pure semantic search. `, 'string') }}",
+            "prompt": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('prompt', ``, 'string') }}",
+            "relevant_keys": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('relevant_keys', `Use 'relevant_keys' to limit context (e.g. only request 'summary', 'url', 'tags' for scouting).`, 'string') }}",
+            "group_id": "iaac-26"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "limit",
+              "displayName": "limit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "search_filter",
+              "displayName": "search_filter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevant_keys",
+              "displayName": "relevant_keys",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        1744
+      ],
+      "id": "edee75be-d375-4da9-8d59-5ac7a5738fd6",
+      "name": "Search Urban Planning Documents 2"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        336,
+        1760
+      ],
+      "id": "e4afc750-8a29-42c2-b318-9ed8224de209",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {
+        "content": "#### Query Project Data with other Chatbot",
+        "height": 80,
+        "width": 624
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -448,
+        2016
+      ],
+      "typeVersion": 1,
+      "id": "937129d8-3bb9-4209-896f-dc7a63f0c8d1",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "path": "isocarp-masterclass"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        5824
+      ],
+      "id": "72a17c5b-5193-4a8e-af49-b3c4c4dbe9ba",
+      "name": "MCP Server Trigger",
+      "webhookId": "33345615-cd50-4496-9b57-ac9af116b9fe"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1744
+      ],
+      "id": "f21f8b9b-008b-4cf0-97c3-169539938554",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "euBTZd3UCjHoUzSY",
+          "name": "Joscha-gemini-token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Searches the Qdrant vector database for Riyadh/Climate Corridor documents.\n\n### CRITICAL: search_filter Syntax\nYou must return a VALID JSON object.\n\n1. NO FILTER (Semantic Search only):\n   {}\n\n2. SINGLE Condition:\n   { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } }\n\n3. MULTIPLE Conditions (AND logic) - Use 'must':\n   {\n     \"must\": [\n       { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } },\n       { \"key\": \"metadata.geographic_scope\", \"match\": { \"value\": \"city_riyadh\" } }\n     ]\n   }\n\n4. OR Logic - Use 'should':\n   {\n     \"should\": [\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"policy_document\" } },\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"design_guideline\" } }\n     ]\n   }\n\n### Available Metadata Keys:\nmetadata.category, metadata.source_type, metadata.planning_phase, metadata.tags, metadata.geographic_scope, metadata.has_quantitative_data, metadata.design_elements\n\n### Enum Values:\n- categories: climate_microclimate, vegetation_greening, pedestrian_mobility, public_space, transit_infrastructure, water_irrigation, materials_surfaces\n- source_type: policy_document, design_guideline, research_paper, case_study, species_database\n\nUse 'relevant_keys' to limit output (e.g. \"summary,url,tags\").",
+        "workflowId": {
+          "__rl": true,
+          "value": "OLatSHlinuSYUVR2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OLatSHlinuSYUVR2",
+          "cachedResultName": "sub-data-fetching-iaac"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('limit', ``, 'number') }}",
+            "search_filter": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('search_filter', `Use empty filter {} for pure semantic search. `, 'string') }}",
+            "prompt": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('prompt', ``, 'string') }}",
+            "relevant_keys": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('relevant_keys', `Use 'relevant_keys' to limit context (e.g. only request 'summary', 'url', 'tags' for scouting).`, 'string') }}",
+            "group_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('group_id', `you need to ask the user for the group ID!`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "limit",
+              "displayName": "limit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "search_filter",
+              "displayName": "search_filter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevant_keys",
+              "displayName": "relevant_keys",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        6064
+      ],
+      "id": "16cef0ba-d29c-4b98-b9b6-da881c001037",
+      "name": "Search Urban Planning Documents "
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OKEKfLhmQA60m4cE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OKEKfLhmQA60m4cE",
+          "cachedResultName": "sub-data-ingestion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "=get from image",
+            "page_number": "={{ $('Loop Over Items').item.json.page_num.toJsonString() }}",
+            "page_max": "={{ $('Code in JavaScript1').item.json.totalPages.toString() }}",
+            "file_url": "={{ $('Loop Over Items').item.json.page_file_url }}",
+            "file_name": "={{ $('On form submission').item.json.data[0].filename }}",
+            "file_type": "PDF",
+            "page_file_url": "={{ $('Loop Over Items').item.json.page_file_url }}",
+            "group_id": "={{ $('On form submission').item.json['group id'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_type",
+              "displayName": "file_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_url",
+              "displayName": "file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_number",
+              "displayName": "page_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_max",
+              "displayName": "page_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_file_url",
+              "displayName": "page_file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        208
+      ],
+      "id": "e788130a-8d60-4e69-ada0-41715ea3166b",
+      "name": "Call 'sub-data-ingestion'"
+    },
+    {
+      "parameters": {
+        "content": "## API connection",
+        "height": 80,
+        "width": 3488
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        3008
+      ],
+      "typeVersion": 1,
+      "id": "b47a232c-719a-4571-bc0e-09aac4d5ca0f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_prompt }}",
+        "options": {
+          "systemMessage": "You are a specialized AI assistant for the Barcelona Public Space Design\n  knowledge base (Qdrant vector store).\n\n  Project Context\n\n  1. Barcelona Model: A city renowned for its human-scale urban design,\n  superblocks (superilles), and Mediterranean public life. Focus:\n  Walkability, green infrastructure, tactical urbanism, and climate\n  adaptation.\n  2. Design Reference Database: Research, guidelines, and case studies on\n  public space design, placemaking, and sustainable urbanism for\n  practitioners working in Mediterranean climates.\n\n  Your Task\n\n  1. Understand queries from urban planners, landscape architects, and\n  design practitioners.\n  2. Design intelligent multi-turn search strategies to find design\n  guidelines, case studies, and technical specifications.\n  3. Retrieve information using semantic search and strict metadata \n  filtering via the search tool.\n  4. Synthesize findings into structured, well-sourced answers.\n\n  We have text descriptions of images/charts. If the user uploads an image,\n  describe it and use that description as a search query.\n\n  ---\n\n   Metadata Schema\n\n  Each document chunk has these fields (use for filtering):\n\n  summary (string)\n  AI-generated 2-3 sentence summary\n\n  source_type (enum)\n  pdf_page, policy_document, planning_document, design_guideline,\n  technical_standard, research_paper, case_study, species_database,\n  project_report, email, presentation\n\n  category (enum)\n  climate_microclimate, vegetation_greening, pedestrian_mobility,\n  public_space, transit_infrastructure, building_architecture,\n  water_irrigation, materials_surfaces, policy_regulation, simulation_tools,\n   project_management, general\n\n  tags (array)\n  Specific keywords (e.g., superblock, Cerdà, SUDS, plaça, Eixample)\n\n  themes (array)\n  Broader themes (e.g., walkability, tactical_urbanism, green_corridors,\n  heat_mitigation)\n\n  design_elements (enum)\n  trees, shrubs, groundcover, shade_structures, pergolas, paving,\n  water_features, street_furniture, lighting, signage, buildings, pathways,\n  none\n\n  publication_date (date)\n  YYYY-MM-DD format\n\n  ---\n  Search Strategy\n\n  Recommended: Multi-turn retrieval\n\n  Pattern 1: Scouting → Detail Fetching\n  - Scouting: High limit (20-40), loose filters (e.g., just category: \n  public_space). Request relevant_keys=\"summary,url,source_type\" to scan\n  quickly.\n  - Detail: Low limit (5-10), full content. Strict filters based on scouting\n   findings.\n\n  Alternative Patterns\n  - Technical/Scientific: source_type: research_paper + relevant tags\n  - Policy/Compliance: source_type: policy_document OR design_guideline\n  - Design Implementation: category: pedestrian_mobility + design_elements: \n  paving\n  - Green Infrastructure: category: vegetation_greening + themes: \n  green_corridors\n\n \n  Response Format\n\n  Structure:\n  - Concise summary heading\n  - Key findings with source citations\n  - Relevant sections (Guidelines, Case Studies, Technical Specs)\n\n  Rules:\n  1. Always cite with clickable Markdown links: [Doc Name p.X](URL)\n  2. Include botanical names for plants when available\n  3. Max 2 citations per source, then say \"see above\"\n  4. First answer: 50-150 words, offer follow-ups (unless user asked for\n  depth)\n\n  Language: English (Professional) unless Catalan/Spanish requested. Use\n  correct terminology (superblock, SUDS, tactical urbanism).\n\n  Constraint: Only cite retrieved sources. If sparse results, suggest\n  broadening the search.\n",
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        16,
+        3264
+      ],
+      "id": "fa2c06fa-37aa-4af3-9d28-4a5e9f18cc54",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "description": "Searches the Qdrant vector database for Riyadh/Climate Corridor documents.\n\n### CRITICAL: search_filter Syntax\nYou must return a VALID JSON object.\n\n1. NO FILTER (Semantic Search only):\n   {}\n\n2. SINGLE Condition:\n   { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } }\n\n3. MULTIPLE Conditions (AND logic) - Use 'must':\n   {\n     \"must\": [\n       { \"key\": \"metadata.category\", \"match\": { \"value\": \"vegetation_greening\" } },\n       { \"key\": \"metadata.geographic_scope\", \"match\": { \"value\": \"city_riyadh\" } }\n     ]\n   }\n\n4. OR Logic - Use 'should':\n   {\n     \"should\": [\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"policy_document\" } },\n       { \"key\": \"metadata.source_type\", \"match\": { \"value\": \"design_guideline\" } }\n     ]\n   }\n\n### Available Metadata Keys:\nmetadata.category, metadata.source_type, metadata.planning_phase, metadata.tags, metadata.geographic_scope, metadata.has_quantitative_data, metadata.design_elements\n\n### Enum Values:\n- categories: climate_microclimate, vegetation_greening, pedestrian_mobility, public_space, transit_infrastructure, water_irrigation, materials_surfaces\n- source_type: policy_document, design_guideline, research_paper, case_study, species_database\n\nUse 'relevant_keys' to limit output (e.g. \"summary,url,tags\").",
+        "workflowId": {
+          "__rl": true,
+          "value": "OLatSHlinuSYUVR2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OLatSHlinuSYUVR2",
+          "cachedResultName": "sub-data-fetching-iaac"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('limit', ``, 'number') }}",
+            "search_filter": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('search_filter', `Use empty filter {} for pure semantic search. `, 'string') }}",
+            "prompt": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('prompt', ``, 'string') }}",
+            "relevant_keys": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('relevant_keys', `Use 'relevant_keys' to limit context (e.g. only request 'summary', 'url', 'tags' for scouting).`, 'string') }}",
+            "group_id": "={{ $json.group_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "limit",
+              "displayName": "limit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "search_filter",
+              "displayName": "search_filter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevant_keys",
+              "displayName": "relevant_keys",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        3504
+      ],
+      "id": "c23cbd05-02ff-4f47-8a3a-3d407ade2af7",
+      "name": "Search Urban Planning Documents 3"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        400,
+        3504
+      ],
+      "id": "e2446ec1-f07b-4808-bfbe-4fcaba27673d",
+      "name": "Wikipedia1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        3504
+      ],
+      "id": "124264b0-87b7-440e-952b-1e48d6dba194",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "euBTZd3UCjHoUzSY",
+          "name": "Joscha-gemini-token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "get_data_group_b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        3264
+      ],
+      "id": "b06ceaa3-0c8b-4436-860a-7beb2027acba",
+      "name": "Webhook",
+      "webhookId": "9ce12de9-50db-418f-8c9c-12e5def2d929"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        3264
+      ],
+      "id": "0fe2cd27-51fa-4623-850a-4c508df3d0d8",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OLatSHlinuSYUVR2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OLatSHlinuSYUVR2",
+          "cachedResultName": "sub-data-fetching-iaac"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "limit": 100,
+            "search_filter": "={{ $json.query.search_filter }}",
+            "group_id": "={{ $json.query.group_id }}",
+            "prompt": "={{ $json.query.prompt }}",
+            "relevant_keys": "={{ $json.query.relevant_keys }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "limit",
+              "displayName": "limit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "search_filter",
+              "displayName": "search_filter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "relevant_keys",
+              "displayName": "relevant_keys",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        3872
+      ],
+      "id": "f823493e-ca87-4947-8860-4e089b656807",
+      "name": "Call 'sub-data-fetching-iaac'"
+    },
+    {
+      "parameters": {
+        "content": "get info without AI ",
+        "height": 80,
+        "width": 208,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        3696
+      ],
+      "typeVersion": 1,
+      "id": "3bcd8334-b391-4b12-8fac-0e69ae8f6c07",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "get info with AI",
+        "height": 80,
+        "width": 224,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        3152
+      ],
+      "typeVersion": 1,
+      "id": "dfeb5f89-f2c5-449c-ab14-f98aaf491420",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OKEKfLhmQA60m4cE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OKEKfLhmQA60m4cE",
+          "cachedResultName": "sub-data-ingestion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "=From: {{ $json.From }} To: {{ $json.To }} Subject: {{ $json.Subject }} content: {{ $json.snippet }}",
+            "page_number": "=0",
+            "page_max": "=0",
+            "file_url": "=none",
+            "file_name": "=none",
+            "file_type": "email"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_type",
+              "displayName": "file_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_url",
+              "displayName": "file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_number",
+              "displayName": "page_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_max",
+              "displayName": "page_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        784
+      ],
+      "id": "258feb1c-de16-4967-b920-2bad3f72691c",
+      "name": "call data ingestion",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        384,
+        3872
+      ],
+      "id": "bbbb85a0-5f26-44ea-b72a-454adcabfb6e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.session_id }}",
+        "sessionTTL": 600
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        48,
+        3520
+      ],
+      "id": "0c71d6e6-5220-4f8a-a7ef-fa7ed140d768",
+      "name": "Redis Chat Memory1",
+      "credentials": {
+        "redis": {
+          "id": "wdQB9kfj3vi9eZDT",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "get_data_group_b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        3872
+      ],
+      "id": "de0e8794-58cc-4d89-8001-752ca1fccac3",
+      "name": "Webhook1",
+      "webhookId": "9ce12de9-50db-418f-8c9c-12e5def2d929"
+    },
+    {
+      "parameters": {
+        "content": "add pdf",
+        "height": 80,
+        "width": 224,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        4144
+      ],
+      "typeVersion": 1,
+      "id": "d3a7d263-bbe4-457c-bad8-1da842845dcb",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add_pdf_group_b",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        4272
+      ],
+      "id": "3243f9ca-4ae3-4870-8770-f8ff1256f6ad",
+      "name": "Webhook2",
+      "webhookId": "9ce12de9-50db-418f-8c9c-12e5def2d929"
+    },
+    {
+      "parameters": {
+        "content": "add image",
+        "height": 80,
+        "width": 432,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        4592
+      ],
+      "typeVersion": 1,
+      "id": "f8e1247e-6fd0-45e2-af74-7f9318feba2f",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "iaac 26 gemini API\n\nHost: https://generativelanguage.googleapis.com\n\nAPI KEy:\nAIzaSyAEtn79XFdPO6R8BuE3ZgLqCWKHMmHnjZM",
+        "height": 144,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "6d63564a-60cd-4daa-a91d-769fc3e7a578",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add_img_group_b",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -480,
+        4704
+      ],
+      "id": "3461aeb0-fe72-487b-9572-387f70ea6aa0",
+      "name": "Webhook3",
+      "webhookId": "9ce12de9-50db-418f-8c9c-12e5def2d929"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        5344
+      ],
+      "id": "27c61948-9799-4327-9eb7-c41c25a54d4a",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add_text_group_b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -432,
+        5328
+      ],
+      "id": "bb88d24e-a503-40d5-9886-2e1017263a82",
+      "name": "Webhook4",
+      "webhookId": "9ce12de9-50db-418f-8c9c-12e5def2d929"
+    },
+    {
+      "parameters": {
+        "content": "add text/payload",
+        "height": 80,
+        "width": 224,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        5200
+      ],
+      "typeVersion": 1,
+      "id": "18923d78-1f0d-494b-9e1c-d51a3168bbec",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        496,
+        4272
+      ],
+      "id": "e7b166e7-9094-41d8-9d62-37e1d88cfaf1",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        4480
+      ],
+      "id": "ffb8827c-92a7-4c33-b48b-08f8ad26a5ec",
+      "name": "Wait1",
+      "webhookId": "cbaa57d7-9188-47c6-8c08-d8b7fedc0d85"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Requires pdf-lib (already installed and allowed in your image)\nconst { PDFDocument } = require('pdf-lib');\n\nconst inputItems = await $input.all();\nconst outputs = [];\n\nfor (const item of inputItems) {\n  if (!item.binary || Object.keys(item.binary).length === 0) {\n    throw new Error('No binary data found. Pass a PDF as binary into this node.');\n  }\n\n  const binKey = Object.keys(item.binary)[0];\n  const bin = item.binary[binKey];\n\n  const mime = bin.mimeType || 'application/pdf';\n  if (mime !== 'application/pdf') {\n    throw new Error('Input binary is not a PDF (mimeType=' + mime + ').');\n  }\n\n  const originalName = bin.fileName || 'document.pdf';\n  const base = originalName.replace(/\\.pdf$/i, '');\n\n  const srcBytes = Buffer.from(bin.data, 'base64');\n  const srcPdf = await PDFDocument.load(srcBytes);\n  const pageCount = srcPdf.getPageCount();\n\n  for (let i = 0; i < pageCount; i++) {\n    const newPdf = await PDFDocument.create();\n    const [page] = await newPdf.copyPages(srcPdf, [i]);\n    newPdf.addPage(page);\n\n    const outBytes = await newPdf.save();\n    const outB64 = Buffer.from(outBytes).toString('base64');\n    const pageNum = i + 1;\n    const pageName = `${base}_p${String(pageNum).padStart(3, '0')}.pdf`;\n\n    outputs.push({\n      json: {\n        pageNumber: pageNum,\n        totalPages: pageCount,\n        originalFileName: originalName,\n        pageFileName: pageName,\n      },\n      binary: {\n        data: {\n          data: outB64,\n          mimeType: 'application/pdf',\n          fileName: pageName,\n          fileExtension: 'pdf',\n        },\n      },\n    });\n  }\n}\n\nreturn outputs;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        4272
+      ],
+      "id": "65e8bf7d-1eaf-42f2-be04-e5edc73af383",
+      "name": "Code in JavaScript",
+      "notesInFlow": true,
+      "notes": "PDF in Seiten Teilen"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "run8n-public",
+        "fileName": "=pdf-pages/{{ $json.pageFileName }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        64,
+        4272
+      ],
+      "id": "d3f5ed8f-3d1d-47df-8582-53090323c681",
+      "name": "Upload a file",
+      "credentials": {
+        "s3": {
+          "id": "4kOd3WOFIZhjnSlL",
+          "name": "backblaze-public-S3 account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48c3b6f4-a3f1-40e3-b80b-a5e80f91f2fa",
+              "name": "=page_file_url",
+              "value": "=https://s3.eu-central-003.backblazeb2.com/run8n-public/pdf-pages/{{ $('Code in JavaScript').item.json.pageFileName }}",
+              "type": "string"
+            },
+            {
+              "id": "24c3df8f-a581-402a-86ae-d69944938bf6",
+              "name": "page_num",
+              "value": "={{ $('Code in JavaScript').item.json.pageNumber }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        4272
+      ],
+      "id": "1d1cf44c-d9f5-46a3-b576-debdf4bab707",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OKEKfLhmQA60m4cE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OKEKfLhmQA60m4cE",
+          "cachedResultName": "sub-data-ingestion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "=get from image",
+            "page_number": "={{ $('Loop Over Items1').item.json.page_num.toJsonString() }}",
+            "page_max": "={{ $('Code in JavaScript').item.json.totalPages.toString() }}",
+            "file_url": "={{ $('Loop Over Items1').item.json.page_file_url }}",
+            "file_name": "={{ $('Webhook2').item.json.body.file_name }}",
+            "file_type": "PDF",
+            "page_file_url": "={{ $('Loop Over Items1').item.json.page_file_url }}",
+            "group_id": "={{ $('Webhook2').item.json.body.group_id }}",
+            "payload": "{{ $('Webhook2').item.json.body.payload }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_type",
+              "displayName": "file_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_url",
+              "displayName": "file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_number",
+              "displayName": "page_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_max",
+              "displayName": "page_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_file_url",
+              "displayName": "page_file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        4416
+      ],
+      "id": "eeaa50f5-5147-4f16-9467-9c38600a1512",
+      "name": "Call 'sub-data-ingestion'1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        272,
+        4704
+      ],
+      "id": "a61084b3-b667-40f4-9f4a-8403461f37c8",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        816,
+        4912
+      ],
+      "id": "2818eff8-e302-487a-ae78-0d52125e92c5",
+      "name": "Wait2",
+      "webhookId": "cbaa57d7-9188-47c6-8c08-d8b7fedc0d85"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "run8n-public",
+        "fileName": "=images/{{ $json.body.file_name }}",
+        "binaryPropertyName": "file",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        4704
+      ],
+      "id": "b4b5b10f-15af-4a5a-9370-c0b1c9cfa1c0",
+      "name": "Upload a file1",
+      "credentials": {
+        "s3": {
+          "id": "4kOd3WOFIZhjnSlL",
+          "name": "backblaze-public-S3 account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48c3b6f4-a3f1-40e3-b80b-a5e80f91f2fa",
+              "name": "=page_file_url",
+              "value": "=https://s3.eu-central-003.backblazeb2.com/run8n-public/images/{{ $('Webhook3').item.json.body.file_name }}",
+              "type": "string"
+            },
+            {
+              "id": "24c3df8f-a581-402a-86ae-d69944938bf6",
+              "name": "page_num",
+              "value": "=1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        4704
+      ],
+      "id": "1723eb64-96d0-44b3-b33b-5c3498460a7c",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OKEKfLhmQA60m4cE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OKEKfLhmQA60m4cE",
+          "cachedResultName": "sub-data-ingestion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $('Webhook3').item.json.body.content }}",
+            "page_number": "=1",
+            "page_max": "=1",
+            "file_url": "={{ $('Loop Over Items2').item.json.page_file_url }}",
+            "file_name": "={{ $('Webhook3').item.json.body.file_name }}",
+            "file_type": "image",
+            "page_file_url": "={{ $('Loop Over Items2').item.json.page_file_url }}",
+            "group_id": "={{ $('Webhook3').item.json.body.group_id }}",
+            "payload": "={{ $('Webhook3').item.json.body.payload }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_type",
+              "displayName": "file_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_url",
+              "displayName": "file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_number",
+              "displayName": "page_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_max",
+              "displayName": "page_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_file_url",
+              "displayName": "page_file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        4848
+      ],
+      "id": "2df45898-f1e7-4e20-8eff-242dd9fb0ce4",
+      "name": "Call 'sub-data-ingestion'2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OKEKfLhmQA60m4cE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OKEKfLhmQA60m4cE",
+          "cachedResultName": "sub-data-ingestion"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $json.body.content }}",
+            "page_number": "=1",
+            "page_max": "=1",
+            "file_url": "=none",
+            "file_name": "=none",
+            "file_type": "text",
+            "page_file_url": "=none",
+            "group_id": "={{ $json.body.group_id }}",
+            "payload": "={{ $json.body.payload }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_type",
+              "displayName": "file_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "file_url",
+              "displayName": "file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_number",
+              "displayName": "page_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_max",
+              "displayName": "page_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "page_file_url",
+              "displayName": "page_file_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "payload",
+              "displayName": "payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        5328
+      ],
+      "id": "781f2f33-61aa-4bfa-860b-1974d302e2a6",
+      "name": "Call 'sub-data-ingestion'3"
+    },
+    {
+      "parameters": {
+        "formTitle": "Test Upload",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "data",
+              "fieldType": "file",
+              "acceptFileTypes": "pdf"
+            },
+            {
+              "fieldLabel": "group id",
+              "defaultValue": "group_b"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "3f38a829-9ad1-48d1-b586-12acd15395d6",
+      "name": "On form submission1",
+      "webhookId": "aa75d85f-4729-4fb9-b91d-d0d04442df47",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "\n### Minimal curl (with filter)\n\n```bash\ncurl -G 'https://run8n.xyz/webhook/get_data_group_b' \\\n  --data-urlencode 'group_id=group_b' \\\n  --data-urlencode 'prompt=trees' \\\n  --data-urlencode 'limit=25' \\\n  --data-urlencode 'relevant_keys=url, summary, content, tags, payload, lat, long, source_type, category' \\\n  --data-urlencode 'search_filter={\"should\":[{\"key\":\"metadata.category\",\"match\":{\"value\":\"vegetation_greening\"}}]}'\n```",
+        "height": 352,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        3632
+      ],
+      "typeVersion": 1,
+      "id": "f335b9ba-2656-48d7-a3dd-9164b7367f62",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "### 1.2 `POST /webhook/add_img_group_b`\n\nUploads a single image.\n\n**Required**\n- `file` (binary image)\n- `group_id` (string)\n\n**Recommended**\n- `payload` (JSON string)\n- `file_name` (string)\n\n**Minimal curl**\n\n```bash\ncurl -X POST 'https://run8n.xyz/webhook/add_img_group_b' \\\n  -F 'file=@/path/to/image.jpg;type=image/jpeg' \\\n  -F 'group_id=group_b' \\\n  -F 'file_name=image.jpg' \\\n  -F 'payload={\"source_type\":\"case_study\",\"category\":\"public_space\",\"tags\":[\"superblock\"],\"lat\":41.3851,\"long\":2.1734}'\n```",
+        "height": 448,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1504,
+        4576
+      ],
+      "typeVersion": 1,
+      "id": "bfc1c2bb-b100-4790-8c26-a08f28cc7ed8",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "\n### 1.3 `POST /webhook/add_text_group_b`\n\nIngests text content (no binary upload).\n\n**Required**\n- `content` (string)\n- `group_id` (string)\n\n**Recommended**\n- `payload` (JSON string)\n- `file_name` (string; label for humans)\n\n**Minimal curl**\n\n```bash\ncurl -X POST 'https://run8n.xyz/webhook/add_text_group_b' \\\n  -F 'content=Short note about shade trees and irrigation for Mediterranean plazas.' \\\n  -F 'group_id=group_b' \\\n  -F 'file_name=text_note_001' \\\n  -F 'payload={\"source_type\":\"design_guideline\",\"category\":\"vegetation_greening\",\"tags\":[\"trees\",\"irrigation\"]}'\n```\n",
+        "height": 448,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1504,
+        5184
+      ],
+      "typeVersion": 1,
+      "id": "fb35864c-a39c-4e26-900b-0c9c9a5db4c4",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "content": "### 1.1 `POST /webhook/add_pdf_group_b`\n\nUploads a PDF. The backend may split it into pages and ingest page-level chunks.\n\n**Required**\n- `file` (binary PDF)\n- `group_id` (string)\n\n**Recommended**\n- `payload` (JSON string; becomes `metadata.payload`)\n- `file_name` (string; label for humans)\n\n**Minimal curl**\n\n```bash\ncurl -X POST 'https://run8n.xyz/webhook/add_pdf_group_b' \\\n  -F 'file=@/path/to/document.pdf;type=application/pdf' \\\n  -F 'group_id=group_b' \\\n  -F 'file_name=document.pdf' \\\n  -F 'payload={\"lat\":41.3851,\"long\":2.1734}'\n```",
+        "height": 448,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        4048
+      ],
+      "typeVersion": 1,
+      "id": "d94e1ca8-a35b-4f8c-b2c9-0020c8436870",
+      "name": "Sticky Note16"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "user_prompt": "tell me about the DOCUMENTS! all docs in the store",
+          "group_id": "group_a",
+          "session_id": "lalalalal"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Call 'sub-data-ingestion'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "call data ingestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Upload a file2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Urban Planning Documents 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Urban Planning Documents ": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub-data-ingestion'": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Urban Planning Documents 3": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub-data-fetching-iaac'": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Call 'sub-data-fetching-iaac'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook3": {
+      "main": [
+        [
+          {
+            "node": "Upload a file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook4": {
+      "main": [
+        [
+          {
+            "node": "Call 'sub-data-ingestion'3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Call 'sub-data-ingestion'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub-data-ingestion'1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Call 'sub-data-ingestion'2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub-data-ingestion'2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'sub-data-ingestion'3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ac6a91c5-8178-4f68-9bb0-e1fcc6a1f73a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8eeabca0261ccf159c85e6841d051a4d80efc8dd291a64434471a79a178968a5"
+  },
+  "id": "xU5tIoZnNV637HUN",
+  "tags": []
+}

@@ -1,0 +1,612 @@
+{
+  "name": "sub-data-ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "file_name"
+            },
+            {
+              "name": "file_type"
+            },
+            {
+              "name": "file_url"
+            },
+            {
+              "name": "page_number"
+            },
+            {
+              "name": "page_max"
+            },
+            {
+              "name": "content"
+            },
+            {
+              "name": "page_file_url"
+            },
+            {
+              "name": "group_id"
+            },
+            {
+              "name": "payload"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        192
+      ],
+      "id": "19ff1ad8-3d21-404b-a4fc-56cb043fdfa6",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "### Transcibe image or PDFs",
+        "height": 256,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "2b11c15c-61d1-439b-8897-9baecd2ee82c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "text": "={{ $input.first().json.toJsonString() }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"LLM-generated 2-3 sentences. Mention figures/tables/diagrams if present.\"\n    },\n    \"source_type\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"pdf_page\",\n        \"policy_document\",\n        \"planning_document\",\n        \"design_guideline\",\n        \"technical_standard\",\n        \"research_paper\",\n        \"case_study\",\n        \"species_database\",\n        \"project_report\",\n        \"email\",\n        \"presentation\"\n      ],\n      \"description\": \"Type of source material\"\n    },\n    \"category\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"climate_microclimate\",\n        \"vegetation_greening\",\n        \"pedestrian_mobility\",\n        \"public_space\",\n        \"transit_infrastructure\",\n        \"building_architecture\",\n        \"water_irrigation\",\n        \"materials_surfaces\",\n        \"policy_regulation\",\n        \"simulation_tools\",\n        \"project_management\",\n        \"general\"\n      ],\n      \"description\": \"Primary topic category\"\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"minItems\": 2,\n      \"maxItems\": 15,\n      \"description\": \"5-15 specific keywords: species names, metrics (UTCI, LST), locations, tools, standards\"\n    },\n    \"themes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"minItems\": 1,\n      \"maxItems\": 8,\n      \"description\": \"Broader themes: thermal_comfort, shade, walkability, native_species, urban_heat_island, etc.\"\n    },\n    \"design_elements\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\",\n        \"enum\": [\n          \"trees\",\n          \"shrubs\",\n          \"groundcover\",\n          \"shade_structures\",\n          \"pergolas\",\n          \"paving\",\n          \"water_features\",\n          \"street_furniture\",\n          \"lighting\",\n          \"signage\",\n          \"buildings\",\n          \"pathways\",\n          \"none\"\n        ]\n      },\n      \"description\": \"Physical design elements discussed (if applicable)\"\n    },\n    \"publication_date\": {\n      \"type\": \"string\",\n      \"description\": \"ISO date YYYY-MM-DD, YYYY-MM, or YYYY if known, otherwise null\"\n    }\n  },\n  \"required\": [\n    \"summary\",\n    \"source_type\",\n    \"category\",\n    \"tags\"\n  ]\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text. Use the language the source text is in.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        192
+      ],
+      "id": "89336591-df82-4a91-93d5-81dbbd0081bc",
+      "name": "Information Extractor1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "={{ $('When Executed by Another Workflow').item.json.group_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "metadataPayloadKey": "metadata"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        192
+      ],
+      "id": "63852a07-8e2f-4bd2-ad19-0763e0bcdaa2",
+      "name": "Qdrant Vector Store1",
+      "credentials": {
+        "qdrantApi": {
+          "id": "FTwhnDXt6Q2jJNEm",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "=content: {{ $json.text_content }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "id",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "document_id",
+                "value": "={{ $json.document_id }}"
+              },
+              {
+                "name": "page_number",
+                "value": "={{ $json.page_number }}"
+              },
+              {
+                "name": "total_pages",
+                "value": "={{ $json.total_pages }}"
+              },
+              {
+                "name": "summary",
+                "value": "={{ $json.summary }}"
+              },
+              {
+                "name": "source_type",
+                "value": "={{ $json.source_type }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.category }}"
+              },
+              {
+                "name": "tags",
+                "value": "={{ $json.tags }}"
+              },
+              {
+                "name": "themes",
+                "value": "={{ $json.themes }}"
+              },
+              {
+                "name": "design_elements",
+                "value": "={{ $json.design_elements }}"
+              },
+              {
+                "name": "publication_date",
+                "value": "={{ $json.publication_date }}"
+              },
+              {
+                "name": "source_url",
+                "value": "={{ $json.source_url }}"
+              },
+              {
+                "name": "payload",
+                "value": "={{ $('When Executed by Another Workflow').item.json.payload }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        416
+      ],
+      "id": "b419b791-635d-4026-a6ef-5a41caa29d14",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 4000,
+        "chunkOverlap": 300,
+        "options": {
+          "splitCode": "markdown"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        576
+      ],
+      "id": "871671c0-13f8-4298-b862-19a5275346e1",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c7017a13-6d46-40be-a0e3-c4139f8f464a",
+              "leftValue": "={{ $json.file_type }}",
+              "rightValue": "PDF",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "13ca707e-b465-4a83-a784-bf0792a3f388",
+              "leftValue": "={{ $json.file_type }}",
+              "rightValue": "image",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        192
+      ],
+      "id": "3ca6c423-39e2-4df4-81ea-0ecad02547f0",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Analyse each page in the Document and  describe the graphics, images, charts in great detail and structure.  Return your answer in markdown following the strucutre:\n\n# Image <n>\n### Image <Type> \n\n### Content \n\nand so on.\n\nIn case there seem to be no image or info graphic simple state :\" no image detected\" ",
+        "documentUrls": "={{ $json.page_file_url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        288,
+        64
+      ],
+      "id": "261ed29f-eca6-46e1-9024-5bd6d63078b5",
+      "name": "Analyze document",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "euBTZd3UCjHoUzSY",
+          "name": "Joscha-gemini-token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7349c25e-07d4-4c57-9c9b-5fab47fffca7",
+              "name": "PDF-text",
+              "value": "=\n\nPage: {{ $('When Executed by Another Workflow').item.json.page_number }}\n\nText:\n{{ $('When Executed by Another Workflow').item.json.content }}\n\nImage Descriptions:\n{{ $json.content?.parts?.[0]?.text }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        64
+      ],
+      "id": "676161bc-cfaf-4848-9f91-4e64d97f7f32",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        720,
+        192
+      ],
+      "id": "ba886408-fa84-4ad7-b561-a62b87fbb372",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "content": "### Extract metadata ",
+        "height": 512,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        64
+      ],
+      "typeVersion": 1,
+      "id": "a1887dfa-c24a-421a-88a8-1c957a37d277",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "423ce1d9-018a-4955-ab57-546071882e63",
+              "name": "text_content",
+              "value": "={{ $('When Executed by Another Workflow').item.json.content }}\n\n{{ $if($(\"Analyze document\").isExecuted, $(\"Analyze document\").item.json.content?.parts?.[0]?.text || \"\", \"\") }}\n",
+              "type": "string"
+            },
+            {
+              "id": "976dd26b-5194-4fad-8041-4869e1f8f6df",
+              "name": "document_id",
+              "value": "={{ $('When Executed by Another Workflow').item.json.file_name.toString().toLowerCase().replace(/[^a-z0-9]/g, '_') }}",
+              "type": "string"
+            },
+            {
+              "id": "30460982-32b0-466d-965c-6e26715b706f",
+              "name": "id",
+              "value": "={{ $('When Executed by Another Workflow').item.json.file_name.toString().toLowerCase().replace(/[^a-z0-9]/g, '_') }}_p{{ parseInt($('When Executed by Another Workflow').item.json.page_number) || 1 }}",
+              "type": "string"
+            },
+            {
+              "id": "f4ce0bb8-6595-4d01-aa56-d7a422666701",
+              "name": "page_number",
+              "value": "={{ parseInt($('When Executed by Another Workflow').item.json.page_number) || 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "4b6d48c0-2f3b-4806-9634-118e6924d546",
+              "name": "total_pages",
+              "value": "={{ parseInt($('When Executed by Another Workflow').item.json.page_max) || 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "a8d3f9c2-7e5b-4a12-9d3e-8f4c5a6b7e9d",
+              "name": "source_url",
+              "value": "={{ $('When Executed by Another Workflow').item.json.file_url }}",
+              "type": "string"
+            },
+            {
+              "id": "2238a12c-bada-44d5-8dee-126e9a2d2903",
+              "name": "summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "7fa80a8d-efec-4914-8a0b-c93b155e02e8",
+              "name": "source_type",
+              "value": "={{ $json.output.source_type }}",
+              "type": "string"
+            },
+            {
+              "id": "b5df17f8-7de9-4402-8263-a003522c97d7",
+              "name": "tags",
+              "value": "={{ Array.isArray($json.output.tags) ? $json.output.tags : [] }}",
+              "type": "array"
+            },
+            {
+              "id": "d89b26fa-5c20-4d45-8da1-9b6a0f7fe443",
+              "name": "themes",
+              "value": "={{ Array.isArray($json.output.themes) ? $json.output.themes : [] }}",
+              "type": "array"
+            },
+            {
+              "id": "5bd64acc-8a95-4c1b-9128-b10899959951",
+              "name": "publication_date",
+              "value": "={{ $json.output.publication_date }}",
+              "type": "string"
+            },
+            {
+              "id": "40201a3d-2b39-4dee-9faa-fd0212b264f9",
+              "name": "category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "0d201a3d-2b39-4dee-9faa-fd0212b264g8",
+              "name": "design_elements",
+              "value": "={{ Array.isArray($json.output.design_elements) ? $json.output.design_elements : [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        192
+      ],
+      "id": "d68c4022-427c-484c-be74-a392cd90a704",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        400
+      ],
+      "id": "788d841a-ef60-408d-ac79-169c9d329bc3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "euBTZd3UCjHoUzSY",
+          "name": "Joscha-gemini-token"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        416
+      ],
+      "id": "13f0ef8e-7231-4ef8-9a4b-1edc052baae5",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "euBTZd3UCjHoUzSY",
+          "name": "Joscha-gemini-token"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "file_name": "Green Riyadh Program - Royal Commission for Riyadh City.pdf",
+          "file_type": "PDF",
+          "file_url": "https://s3.eu-central-003.backblazeb2.com/run8n-public/pdf-pages/Green Riyadh Program - Royal Commission for Riyadh City_p001.pdf",
+          "page_number": "\"1\"",
+          "page_max": "6",
+          "content": "# GREEN RIVADH PROGRAM \n\nThe \"Green Riyadh\" program is one of the largest ambitious urban afforestation projects in the world and one of the four major Riyadh projects launched by the Custodian of the Two Holy Mosques King Salman Bin Abdulaziz, on Tuesday, Rajab 12, 1440 AH (March 19, 2019 AD) at the initiative of His Royal Highness Prince Mohammed Bin Salman Bin Abdulaziz, Crown Prince Prime Minister to contribute to achieving on the goals of \"Saudi Vision 2030\" to raise the classification of Riyadh among its counterparts in the world and make it one of the best cities to live in the world.",
+          "page_file_url": "https://s3.eu-central-003.backblazeb2.com/run8n-public/pdf-pages/Green Riyadh Program - Royal Commission for Riyadh City_p001.pdf",
+          "group_id": "group_a",
+          "payload": ""
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Analyze document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Analyze document": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "241d1d5c-1cd8-437e-9ef3-5dd300601ed4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8eeabca0261ccf159c85e6841d051a4d80efc8dd291a64434471a79a178968a5"
+  },
+  "id": "OKEKfLhmQA60m4cE",
+  "tags": []
+}
