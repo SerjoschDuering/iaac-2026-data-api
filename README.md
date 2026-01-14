@@ -34,6 +34,18 @@ Examples:
 
 Keep it simple! A working demo is better than an ambitious failure.
 
+### Deliverables
+
+Submit **two things**:
+
+1. **Working App Demo**
+   - A live link to your app, OR
+   - A short video (30-60 sec) showing your app in action
+
+2. **Miro Diagram**
+   - Show how your app works (data flow, user interactions)
+   - Keep it simple: boxes and arrows
+
 ---
 
 ## The API (4 endpoints)
